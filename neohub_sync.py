@@ -1,7 +1,9 @@
 import asyncio
+import dataclasses
 import functools
 import inspect
 import typing as tp
+from typing import Any
 
 from neohubapi import neohub
 
@@ -18,10 +20,10 @@ class SyncObject:
   """Synchronous object."""
 
   def __init__(self, obj: tp.Any):
-    self._obj = obj
+    self._base_obj = obj
 
     for name, member in inspect.getmembers(obj):
-      if name.startswith('_'):
+      if name.startswith('__'):
         continue
 
       if asyncio.iscoroutinefunction(member):
@@ -36,7 +38,7 @@ class NeoHubSync(SyncObject):
     port = 4242 if token is None else 4243
     super().__init__(neohub.NeoHub(host, port, token=token))
 
-  def get_live_data(self) -> tp.Tuple[object, tp.Dict[str, tp.List[SyncObject]]]:
+  def get_live_data_sync(self) -> tp.Tuple[object, tp.Dict[str, tp.List[SyncObject]]]:
     hub_data, devices = super().get_live_data()
     return hub_data, {
         key: [SyncObject(device) for device in devices]

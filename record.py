@@ -3,6 +3,7 @@
 import functools
 import os
 import time
+import typing as tp
 from pymongo import MongoClient
 
 from neohub_sync import NeoHubSync
@@ -19,18 +20,21 @@ hub = NeoHubSync(
     host=os.environ['NEOHUB_IP'],
     token=os.environ['NEOHUB_TOKEN'])
 
-def get_device():
-  raise RuntimeError(f"Device '{DEVICE_NAME}' not found.")
+D = tp.TypeVar('D')  # NeoStat or SyncObject
 
-def get_device(devices):
+def find_device(devices: tp.Dict[str, tp.List[D]], name: str = DEVICE_NAME) -> D:
   for device in devices['thermostats']:
-    if device.name == DEVICE_NAME:
+    if device.name == name:
       return device
   raise RuntimeError(f"Device '{DEVICE_NAME}' not found.")
 
+def get_device(name: str = DEVICE_NAME):
+  _, devices = hub.get_live_data_sync()
+  return find_device(devices, name)
+
 def get_data():
   hub_data, devices = hub.get_live_data()
-  device = get_device(devices)
+  device = find_device(devices)
 
   data = {
     'timestamp': hub_data.HUB_TIME,
