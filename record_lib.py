@@ -2,7 +2,6 @@
 
 import functools
 import os
-import time
 import typing as tp
 from pymongo import MongoClient
 
@@ -45,20 +44,9 @@ def get_data():
 
   return data
 
-def record(collection='test', db=None):
+def record(collection: str = 'test', db=None):
   """Reads and records data."""
   data = get_data()
   print(data)
   db = db or get_db()
   db[collection].insert_one(data)
-
-
-if __name__ == '__main__':
-  FREQUENCY = 2 * 60
-
-  while True:
-    try:
-      record()
-    except Exception as e:
-      print(e)
-    time.sleep(FREQUENCY)
