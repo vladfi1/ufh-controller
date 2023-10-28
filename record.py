@@ -34,16 +34,10 @@ def get_data():
 
   data = {
     'timestamp': hub_data.HUB_TIME,
+    'heat_on': device.heat_on,
+    'temperature': float(device.temperature),
+    'target_temperature': float(device.target_temperature),
   }
-
-  device_keys = [
-    'heat_on',
-    'temperature',
-    'target_temperature',
-  ]
-
-  for key in device_keys:
-    data[key] = getattr(device, key)
 
   return data
 
