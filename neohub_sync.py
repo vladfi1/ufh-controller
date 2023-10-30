@@ -39,7 +39,7 @@ class NeoHubSync(SyncObject):
     super().__init__(neohub.NeoHub(host, port, token=token))
 
   def get_live_data_sync(self) -> tp.Tuple[object, tp.Dict[str, tp.List[SyncObject]]]:
-    hub_data, devices = super().get_live_data()
+    hub_data, devices = self.get_live_data()
     return hub_data, {
         key: [SyncObject(device) for device in devices]
         for key, devices in devices.items()
