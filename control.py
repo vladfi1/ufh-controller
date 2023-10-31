@@ -27,10 +27,10 @@ class PIDController:
     return output, stats
 
 def turn_on(device):
-  device.set_temperature(22)
+  device.set_target_temperature(22.5)
 
 def turn_off(device):
-  device.set_temperature(15)
+  device.set_target_temperature(19.5)
 
 def default_controller(set_point) -> PIDController:
   return PIDController(K_p=1, K_i=0.1, K_d=5, set_point=set_point)
