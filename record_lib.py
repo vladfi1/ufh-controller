@@ -5,7 +5,7 @@ import os
 import typing as tp
 from pymongo import MongoClient
 
-from neohub_sync import NeoHubSync
+from neohub_sync import NeoHubSync, NeoStatSync
 
 DEVICE_NAME = 'Vlads Room'
 
@@ -17,26 +17,30 @@ def get_db(mongo_uri="mongodb://localhost:27017/"):
 
 hub = NeoHubSync(
     host=os.environ['NEOHUB_IP'],
-    token=os.environ['NEOHUB_TOKEN'])
+    token=os.environ.get('NEOHUB_TOKEN'))
 
 D = tp.TypeVar('D')  # NeoStat or SyncObject
 
-def find_device(devices: tp.Dict[str, tp.List[D]], name: str = DEVICE_NAME) -> D:
-  for device in devices['thermostats']:
+def find_device(devices: tp.List[D], name: str = DEVICE_NAME) -> D:
+  for device in devices:
     if device.name == name:
       return device
   raise RuntimeError(f"Device '{DEVICE_NAME}' not found.")
 
 def get_device(name: str = DEVICE_NAME):
-  _, devices = hub.get_live_data_sync()
-  return find_device(devices, name)
+  return find_device(hub.get_neostats()[1], name)
+
+def device_and_time(name: str = DEVICE_NAME) -> tuple[int, NeoStatSync]:
+  """Returns (timestamp, device)."""
+  hub_data, devices = hub.get_neostats()
+  device = find_device(devices, name)
+  return hub_data.HUB_TIME, device
 
 def get_data():
-  hub_data, devices = hub.get_live_data()
-  device = find_device(devices)
+  hub_time, device = device_and_time()
 
   data = {
-    'timestamp': hub_data.HUB_TIME,
+    'timestamp': hub_time,
     'heat_on': device.heat_on,
     'temperature': float(device.temperature),
     'target_temperature': float(device.target_temperature),

@@ -1,11 +1,10 @@
 import asyncio
-import dataclasses
 import functools
 import inspect
 import typing as tp
 from typing import Any
 
-from neohubapi import neohub
+from neohubapi import neohub, neostat
 
 def wrap_async_function(coroutine_function):
   assert asyncio.iscoroutinefunction(coroutine_function)
@@ -16,10 +15,12 @@ def wrap_async_function(coroutine_function):
 
   return function
 
-class SyncObject:
+T = tp.TypeVar('T')
+
+class SyncObject(tp.Generic[T]):
   """Synchronous object."""
 
-  def __init__(self, obj: tp.Any):
+  def __init__(self, obj: T):
     self._base_obj = obj
 
     for name, member in inspect.getmembers(obj):
@@ -31,16 +32,21 @@ class SyncObject:
       else:
         setattr(self, name, member)
 
-class NeoHubSync(SyncObject):
+class NeoStatSync(SyncObject[neostat.NeoStat], neostat.NeoStat):
+  """Fake class for type hinting."""
+
+class NeoHubSync(SyncObject[neohub.NeoHub], neohub.NeoHub):
   """Synchronous NeoHub."""
 
-  def __init__(self, host: str, token: tp.Optional[str]):
+  def __init__(self, host: str, token: tp.Optional[str] = None):
     port = 4242 if token is None else 4243
     super().__init__(neohub.NeoHub(host, port, token=token))
 
-  def get_live_data_sync(self) -> tp.Tuple[object, tp.Dict[str, tp.List[SyncObject]]]:
-    hub_data, devices = self.get_live_data()
-    return hub_data, {
-        key: [SyncObject(device) for device in devices]
-        for key, devices in devices.items()
-    }
+  def get_neostats(self) -> tuple[dict, tp.List[NeoStatSync]]:
+    neostats = []
+    hub_data = self.get_live_data()
+
+    for device in hub_data.devices:
+      neostats.append(SyncObject(neostat.NeoStat(self._base_obj, device)))
+
+    return hub_data, neostats
