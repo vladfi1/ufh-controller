@@ -1,10 +1,10 @@
-import collections
 import datetime
 import enum
 import time
 
 from absl import app, flags
 
+from neohubapi import neohub
 from neohub_sync import NeoStatSync
 from record_lib import get_device, get_db
 import derivatives
@@ -68,7 +68,13 @@ def main(_):
 
   dt = FREQUENCY.value
   while True:
-    device = get_device()
+    try:
+      device = get_device()
+    except neohub.Error as e:
+      print(e)
+      time.sleep(300)
+      continue
+
     current_temperature = float(device.temperature)
     current_time = time.time()
     current_time_minutes = current_time / 60

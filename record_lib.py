@@ -5,6 +5,7 @@ import os
 import typing as tp
 from pymongo import MongoClient
 
+from neohubapi import neohub
 from neohub_sync import NeoHubSync, NeoStatSync
 
 DEVICE_NAME = 'Vlads Room'
@@ -21,11 +22,14 @@ hub = NeoHubSync(
 
 D = tp.TypeVar('D')  # NeoStat or SyncObject
 
+class DeviceNotFound(neohub.Error):
+  pass
+
 def find_device(devices: tp.List[D], name: str = DEVICE_NAME) -> D:
   for device in devices:
     if device.name == name:
       return device
-  raise RuntimeError(f"Device '{DEVICE_NAME}' not found.")
+  raise DeviceNotFound(f"Device '{DEVICE_NAME}' not found.")
 
 def get_device(name: str = DEVICE_NAME):
   return find_device(hub.get_neostats()[1], name)
